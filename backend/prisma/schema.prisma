@@ -1,0 +1,50 @@
+// Prisma schema for ReachInbox Email Scheduler
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite" // Can be switched to "postgresql" when using PostgreSQL
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  name         String?
+  avatar       String?
+  googleId     String?   @unique
+  slackWebhook String?
+  slackToken   String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model EmailJob {
+  id                 String    @id @default(uuid())
+  jobId              String?   @unique // BullMQ Job ID
+  sender             String
+  recipient          String
+  subject            String
+  body               String
+  status             String    @default("SCHEDULED") // SCHEDULED, PROCESSING, SENT, FAILED, DELAYED
+  scheduledAt        DateTime
+  sentAt             DateTime?
+  delayMs            Int       @default(2000)
+  hourlyLimit        Int       @default(200)
+  errorMessage       String?
+  etherealPreviewUrl String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+}
+
+model RateLimitEvent {
+  id             String    @id @default(uuid())
+  sender         String
+  limit          Int
+  currentCount   Int
+  rescheduledTo  DateTime
+  slackNotified  Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+}
